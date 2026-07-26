@@ -2,11 +2,11 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-trama_publica}
-      POSTGRES_USER: ${POSTGRES_USER:-trama_publica}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trama_publica_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-faro_politico_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-faro_politico_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD fuera de Git}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

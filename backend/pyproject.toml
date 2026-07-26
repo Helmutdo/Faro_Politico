@@ -36,6 +36,9 @@ packages = ["src/trama_publica"]
 addopts = "-ra --strict-config --strict-markers"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+  "postgres: integration tests requiring isolated PostgreSQL",
+]
 
 [tool.ruff]
 line-length = 88

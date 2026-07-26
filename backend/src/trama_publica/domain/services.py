@@ -311,6 +311,15 @@ def _validate_conviction(session: Session, claim: EvidenceClaim) -> None:
         raise DomainValidationError(
             "CONVICTED_IN requires a corresponding convicted participation"
         )
+    if (
+        document.source_type is SourceType.FINAL_JUDICIAL_DECISION
+        and participation.finality_status is not FinalityStatus.FINAL
+    ):
+        raise DomainValidationError(
+            "final conviction source requires final participation status"
+        )
+    if participation.finality_status is FinalityStatus.REVOKED:
+        raise DomainValidationError("revoked participation cannot verify conviction")
 
 
 def approve_claim(

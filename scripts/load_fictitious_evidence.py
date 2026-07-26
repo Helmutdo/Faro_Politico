@@ -10,13 +10,14 @@ from trama_publica.db.models import (
     PublicOffice,
     SourceDocument,
 )
-from trama_publica.db.session import SessionLocal
+from trama_publica.db.session import create_session_factory
 from trama_publica.domain.enums import (
     AccessStatus,
     CaseStatus,
     EntityType,
     EvidenceLevel,
     FinalityStatus,
+    JudicialEventType,
     JudicialOutcome,
     JudicialRole,
     MandateStatus,
@@ -28,12 +29,14 @@ from trama_publica.domain.enums import (
 from trama_publica.domain.schemas import ClaimCreate, SourceDocumentCreate
 from trama_publica.domain.services import (
     add_document,
+    add_source_identity,
     approve_claim,
     create_claim,
     create_mandate,
     create_person,
     link_person_to_case,
     register_judicial_case,
+    register_judicial_event,
     submit_claim_for_review,
 )
 
@@ -61,7 +64,7 @@ def source_document(
 
 
 def run() -> None:
-    with SessionLocal.begin() as session:
+    with create_session_factory().begin() as session:
         existing = session.scalar(
             select(SourceDocument).where(SourceDocument.source_key == FIXTURE_SOURCE)
         )
@@ -112,6 +115,22 @@ def run() -> None:
 
         person_a = create_person(session, canonical_name="Persona Ficticia A")
         person_b = create_person(session, canonical_name="Persona Ficticia B")
+        add_source_identity(
+            session,
+            person_entity_id=person_a.entity_id,
+            source_key=FIXTURE_SOURCE,
+            source_person_id="PERSONA-A",
+            displayed_name="Persona Ficticia A",
+            source_document_id=mandate_document.id,
+        )
+        add_source_identity(
+            session,
+            person_entity_id=person_b.entity_id,
+            source_key=FIXTURE_SOURCE,
+            source_person_id="PERSONA-B",
+            displayed_name="Persona Ficticia B",
+            source_document_id=mandate_document.id,
+        )
 
         office_entity = Entity(entity_type=EntityType.PUBLIC_OFFICE)
         organization_entity = Entity(entity_type=EntityType.ORGANIZATION)
@@ -174,6 +193,24 @@ def run() -> None:
             finality_status=FinalityStatus.FINAL,
             source_document_id=acquittal_document.id,
         )
+        register_judicial_event(
+            session,
+            judicial_case_entity_id=case_a.entity_id,
+            event_type=JudicialEventType.ACCUSATION,
+            event_date=date(2024, 1, 1),
+            original_description="Acusación completamente ficticia.",
+            legal_effect="Inicio ficticio, sin declaración de culpabilidad.",
+            source_document_id=filing_document.id,
+        )
+        register_judicial_event(
+            session,
+            judicial_case_entity_id=case_a.entity_id,
+            event_type=JudicialEventType.JUDGMENT,
+            event_date=date(2025, 1, 1),
+            original_description="Absolución final completamente ficticia.",
+            legal_effect="Absolución ficticia.",
+            source_document_id=acquittal_document.id,
+        )
 
         case_b = register_judicial_case(
             session,
@@ -191,6 +228,15 @@ def run() -> None:
             normalized_role=JudicialRole.CONVICTED_PERSON,
             outcome=JudicialOutcome.CONVICTED,
             finality_status=FinalityStatus.FINAL,
+            source_document_id=conviction_document.id,
+        )
+        register_judicial_event(
+            session,
+            judicial_case_entity_id=case_b.entity_id,
+            event_type=JudicialEventType.JUDGMENT,
+            event_date=date(2025, 1, 1),
+            original_description="Condena final completamente ficticia.",
+            legal_effect="Condena ficticia firme.",
             source_document_id=conviction_document.id,
         )
 

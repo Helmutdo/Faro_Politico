@@ -35,3 +35,4 @@ data/raw/*
 
 # Local database volumes
 .postgres-data/
+.local/postgresql/
