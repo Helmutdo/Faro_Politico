@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DiputadosPeriodoColeccion xmlns="http://opendata.camara.cl/camaradiputados/v1">
+  <DiputadoPeriodo>
+    <FechaInicio>2030-03-10T00:00:00</FechaInicio>
+    <Diputado>
+      <Id>1074</Id>
+      <Nombre>Marisela</Nombre>
+      <Nombre2 />
+      <ApellidoPaterno>Santibáñez</ApellidoPaterno>
+      <ApellidoMaterno>Novoa</ApellidoMaterno>
+    </Diputado>
+  </DiputadoPeriodo>
+</DiputadosPeriodoColeccion>

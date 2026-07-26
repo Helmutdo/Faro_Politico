@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SesionSala xmlns="http://opendata.camara.cl/camaradiputados/v1">
+  <Id>4804</Id>
+  <Numero>48</Numero>
+  <FechaInicio>2026-07-22T17:30:25</FechaInicio>
+  <FechaTermino>2026-07-22T19:18:26</FechaTermino>
+  <Estado Valor="1">Celebrada</Estado>
+  <ListadoAsistencia>
+    <Asistencia>
+      <TipoAsistencia Valor="1">Asiste</TipoAsistencia>
+      <Diputado><Id>803</Id><Nombre>René</Nombre></Diputado>
+    </Asistencia>
+  </ListadoAsistencia>
+</SesionSala>
