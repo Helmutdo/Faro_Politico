@@ -48,6 +48,22 @@ class IndividualVote:
     original_option: str
 
 
+@dataclass(frozen=True)
+class SessionVotes:
+    session_id: str
+    container_present: bool
+    vote_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class VoteDetail:
+    vote_id: str
+    description: str
+    voted_at: datetime
+    session_id: str | None
+    individual_votes: dict[str, IndividualVote]
+
+
 def parse_xml(content: bytes) -> Element:
     """Parse trusted response bytes without resolving external entities."""
     parser = etree.XMLParser(resolve_entities=False, no_network=True)
@@ -187,3 +203,52 @@ def parse_individual_votes(content: bytes) -> dict[str, IndividualVote]:
             original_option=type_original(vote, "OpcionVoto"),
         )
     return result
+
+
+def inspect_session_votes(content: bytes) -> SessionVotes:
+    """Report only explicit session-vote information present in the XML."""
+    root = parse_xml(content)
+    session_id = value(root, "Id")
+    assert session_id is not None
+    containers = [
+        element
+        for element in descendants(root, "Votaciones")
+        if element.getparent() is root
+    ]
+    vote_ids: list[str] = []
+    if containers:
+        for vote in descendants(containers[0], "Votacion"):
+            vote_id = value(vote, "Id", required=False)
+            if vote_id:
+                vote_ids.append(vote_id)
+    return SessionVotes(
+        session_id=session_id,
+        container_present=bool(containers),
+        vote_ids=tuple(vote_ids),
+    )
+
+
+def parse_vote_detail(content: bytes) -> VoteDetail:
+    """Parse a vote and keep session_id nullable unless XML states it."""
+    root = parse_xml(content)
+    vote_id = value(root, "Id")
+    description = value(root, "Descripcion")
+    voted_at = value(root, "Fecha")
+    session = child(root, "Sesion")
+    session_id = value(session, "Id", required=False) if session is not None else None
+    assert vote_id and description is not None and voted_at
+    return VoteDetail(
+        vote_id=vote_id,
+        description=description,
+        voted_at=datetime.fromisoformat(voted_at),
+        session_id=session_id,
+        individual_votes=parse_individual_votes(content),
+    )
+
+
+def confirmed_session_id(
+    detail: VoteDetail, *, temporal_candidate: str | None = None
+) -> str | None:
+    """Return only an explicit source value, never a temporal candidate."""
+    del temporal_candidate
+    return detail.session_id

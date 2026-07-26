@@ -1,81 +1,182 @@
-# Spike del contrato Open Data de la Cámara
+# Contrato de datos de Cámara para la V0
 
-Fecha de comprobación real: 25 de julio de 2026.
+Última comprobación real: 25 de julio de 2026 (America/Santiago).
 
-## Resultado
+## Decisión ejecutiva
 
-La fuente permite recuperar período, legislatura, sesiones, asistencia,
-votaciones y votos individuales. No permite completar de forma verificable la
-cadena para el Distrito 19 en su estado actual: las respuestas reales omiten la
-relación entre `DiputadoPeriodo` y `Distrito`, aunque la documentación y el XSD
-la declaran.
+El contrato de Open Data de la Cámara está incompleto para resolver
+territorialmente a los diputados vigentes:
 
-No se infirieron nombres ni distritos y no se usó otra fuente para rellenar la
-ausencia.
+- `retornarDiputadosPeriodoActual` devuelve 155 `DiputadoPeriodo`, pero ninguno
+  contiene `Distrito`, `Distrito/Numero` ni `Distrito/Comunas`;
+- el resultado es idéntico para HTTP GET y HTTP POST;
+- SOAP 1.1 y SOAP 1.2 también omiten los tres nodos;
+- `retornarDiputadosXPeriodo` ya había mostrado la misma omisión.
 
-## Servicios inspeccionados
+Por tanto, la V0 no debe publicar pertenencia territorial desde Open Data hasta
+que la fuente reponga el campo o se apruebe expresamente otra fuente productiva.
+No se usarán nombres hardcodeados.
 
-- `WSDiputado.asmx?WSDL`
-- `WSLegislativo.asmx?WSDL`
-- `WSSala.asmx?WSDL`
-- servicio consolidado legado `wscamaradiputados.asmx?WSDL`
-- esquema oficial `camaradiputados/v1/camaradiputados.xsd`
+El ID del diputado sí es consistente entre el listado vigente, asistencia y
+voto individual, y se adopta como clave oficial de resolución de entidades.
 
-Todos pertenecen a `https://opendata.camara.cl`.
+No se encontró una relación explícita entre sesión y votación. En consecuencia,
+`Votacion.session_id` será nullable. Una coincidencia temporal no se almacenará,
+publicará ni tratará como relación confirmada.
 
-## Operaciones y dependencias
+## Operaciones y protocolos comprobados
 
-| Información | Operación y URL | Método y parámetros | Respuesta real general | Depende de |
-|---|---|---|---|---|
-| Diputados vigentes por período | `WSDiputado.asmx/retornarDiputadosXPeriodo` | GET, `prmPeriodoID` entero; también documenta POST form y SOAP | `DiputadosPeriodoColeccion/DiputadoPeriodo/{FechaInicio, FechaTermino, Diputado}`. En la respuesta observada falta `Distrito`. | ID de `retornarPeriodoLegislativoActual` |
-| Diputados vigentes (alternativa) | `WSDiputado.asmx/retornarDiputadosPeriodoActual` | GET sin parámetros; también POST/SOAP | Misma colección, pero observada sin `Distrito` y con fechas anómalas. | Ninguna |
-| Períodos | `WSLegislativo.asmx/retornarPeriodosLegislativos` | GET sin parámetros; también POST/SOAP | `PeriodosLegislativosColeccion/PeriodoLegislativo`, con ID, nombre, fechas y legislaturas. | Ninguna |
-| Período actual | `WSLegislativo.asmx/retornarPeriodoLegislativoActual` | GET sin parámetros; también POST/SOAP | Un `PeriodoLegislativo` con `Id`, nombre, fechas y legislaturas. El 25-07-2026 retornó período 11. | Ninguna |
-| Legislaturas | `WSLegislativo.asmx/retornarLegislaturas` | GET sin parámetros; también POST/SOAP | `LegislaturasColeccion/Legislatura`, con ID, número, fechas y tipo. | Ninguna |
-| Legislatura actual | `WSLegislativo.asmx/retornarLegislaturaActual` | GET sin parámetros; también POST/SOAP | Una `Legislatura`. El período actual también incluye este dato; se observó ID 58, número 374. | Ninguna |
-| Sesiones | `WSSala.asmx/retornarSesionesXLegislatura` | GET, `prmLegislaturaId` entero; también POST/SOAP | `SesionesSalaColeccion/Sesion`, con ID, número, intervalo, tipo y estado. | ID de legislatura |
-| Detalle y asistencia | `WSSala.asmx/retornarSesionAsistencia` | GET, `prmSesionId` entero; también POST/SOAP | `SesionSala` con datos de sesión y `ListadoAsistencia/Asistencia`; cada registro contiene estado original, justificación opcional y diputado. | ID de sesión |
-| Votaciones | `WSLegislativo.asmx/retornarVotacionesXAnno` | GET, `prmAnno` entero; también POST/SOAP | `VotacionesColeccion/Votacion`, con ID, descripción, fecha, totales, quorum, resultado y tipo. | Año |
-| Detalle de votación | `WSLegislativo.asmx/retornarVotacionDetalle` | GET, `prmVotacionId` entero; también POST/SOAP | Una `Votacion` con metadatos y `Votos/Voto`; cada voto contiene diputado y `OpcionVoto`. | ID de votación |
-| Voto individual | Incluido en `retornarVotacionDetalle` | No requiere otra petición | `Voto/Diputado/Id` más `Voto/OpcionVoto`; el texto original se conserva. | Detalle de votación |
+Todos los endpoints XML pertenecen a
+`https://opendata.camara.cl/camaradiputados/WServices`.
 
-Los endpoints HTTP GET retornaron `200 text/xml; charset=utf-8`. El script usa
-`raise_for_status()`, timeout explícito y User-Agent identificable.
+| Operación | Protocolos reales | Parámetros | Campos relevantes realmente presentes |
+|---|---|---|---|
+| `retornarDiputadosPeriodoActual` | GET, POST form, SOAP 1.1, SOAP 1.2 | ninguno | `DiputadoPeriodo`, fechas, `Diputado/Id`, identidad y militancias. Sin `Distrito`. |
+| `retornarPeriodoLegislativoActual` | GET | ninguno | período ID 11, legislatura ID 58, fechas y tipo. |
+| `retornarLegislaturas` | GET | ninguno | colección de legislaturas; permitió seleccionar explícitamente la anterior, ID 57. |
+| `retornarSesionesXLegislatura` | GET | `prmLegislaturaId` | sesiones con ID, número, fechas, tipo y estado. |
+| `retornarSesionesXAnno` | GET | `prmAnno` | misma estructura general de sesiones. |
+| `retornarSesionAsistencia` | GET y SOAP 1.1 | `prmSesionId` | sesión y `ListadoAsistencia`; sin `Votaciones` en las muestras. |
+| `retornarVotacionesXAnno` | GET | `prmAnno` | eventos con ID, fecha, descripción, totales y tipos; sin sesión. |
+| `retornarVotacionDetalle` | GET | `prmVotacionId` | evento y votos individuales asociados por `Diputado/Id`; sin sesión. |
 
-## Cadena observada y límites
+Todas las consultas aplican timeout, User-Agent identificable,
+`raise_for_status()` y preservación byte a byte de la respuesta con SHA-256.
 
-1. `retornarPeriodoLegislativoActual` retornó período ID `11` y legislatura ID
-   `58`.
-2. `retornarSesionesXLegislatura(58)` retornó 55 sesiones.
-3. Las sesiones celebradas consultadas mediante `retornarSesionAsistencia`
-   retornaron entre 154 y 155 registros de asistencia.
-4. `retornarVotacionesXAnno(2026)` retornó 791 votaciones en la comprobación.
-5. `retornarVotacionDetalle(87057)` retornó 155 votos individuales en la
-   comprobación exploratoria.
-6. La respuesta de votación no contiene ID de sesión. El spike selecciona una
-   votación cuyo timestamp cae dentro del intervalo de una sesión y etiqueta
-   expresamente esa unión como inferencia temporal, no como relación oficial.
-7. La ausencia de `Distrito` impide seleccionar responsablemente un voto de un
-   diputado del Distrito 19.
+## Auditoría territorial cruda
 
-## Diferencias entre documentación y respuesta
+Conteos obtenidos directamente con XPath sobre cada XML completo, antes de
+usar el parser:
 
-- El XSD documenta `DiputadoPeriodo/Distrito` y las páginas ASMX lo muestran en
-  ejemplos GET, POST y SOAP. Las respuestas reales de
-  `retornarDiputadosXPeriodo` para los períodos 9, 10 y 11 no contienen ningún
-  nodo `Distrito`, tanto por GET como por SOAP 1.1.
-- `retornarDiputadosPeriodoActual` también omite `Distrito`. El 25-07-2026 su
-  primer `DiputadoPeriodo/FechaInicio` fue `2030-03-10T00:00:00`, pese a que el
-  período actual retornado por el servicio legislativo comienza en 2026.
-- El endpoint consolidado legado
-  `getPeriodoLegislativoActual` respondió un elemento con `xsi:nil="true"`,
-  mientras el servicio separado retornó correctamente el período 11.
-- `getSesionDetalle` del servicio legado respondió elementos `Sesion` con
-  `xsi:nil="true"` para sesiones recientes; `WSSala.retornarSesionAsistencia`
-  sí retornó sus datos y asistencia.
-- El tipo documentado para sesión incluye votaciones en algunos ejemplos, pero
-  ninguna de las 55 respuestas de la legislatura 58 consultadas mediante
-  `retornarSesionAsistencia` incluyó nodos `Votacion`.
+| Protocolo | DiputadoPeriodo | Distrito | Distrito/Numero | Distrito/Comunas |
+|---|---:|---:|---:|---:|
+| HTTP GET | 155 | 0 | 0 | 0 |
+| HTTP POST form | 155 | 0 | 0 | 0 |
+| SOAP 1.1 | 155 | 0 | 0 | 0 |
+| SOAP 1.2 | 155 | 0 | 0 | 0 |
+
+El XSD y los ejemplos de la página ASMX declaran
+`DiputadoPeriodo/Distrito/{Numero,Comunas}`. Es un campo documentado pero
+ausente en producción.
+
+## Validación territorial externa
+
+Se investigaron únicamente fuentes oficiales del Congreso:
+
+1. El Reporte Distrital 2026 de la Biblioteca del Congreso Nacional responde
+   `200` como HTML server-rendered y confirma cinco diputados para el Distrito
+   19. Los cinco nombres se pudieron resolver, solo como validación, contra
+   IDs del listado Open Data: `1197`, `1143`, `1116`, `1204` y `1119`.
+2. El reporte BCN no incluye el ID oficial de Cámara ni expone en la página una
+   API estructurada documentada. El HTML supera 1 MB y su tabla no constituye
+   un contrato estable de datos.
+3. Las fichas públicas de `camara.cl` muestran distrito y un parámetro `prmId`,
+   pero las peticiones automatizadas desde este entorno reciben `403` de
+   Cloudflare.
+
+Decisión: BCN sirve para comprobar que se esperan cinco representantes, pero no
+se convierte automáticamente en fuente productiva. La coincidencia por nombre
+queda en el resumen como validación diagnóstica, no como cadena publicable.
+
+Como evidencia de consistencia, el ID `1197`, obtenido al cruzar la validación
+BCN con el listado oficial, apareció también en asistencia y en el detalle de
+una votación. Esto valida el ID como clave de entidad, pero no subsana el campo
+territorial ausente en Open Data.
+
+## Auditoría sesión–votación
+
+Se inspeccionaron:
+
+- sesiones recientes `4804`, `4803` y `4802` de la legislatura 58;
+- tres sesiones celebradas de 2025 pertenecientes a la legislatura anterior
+  57;
+- cada detalle mediante HTTP GET y SOAP 1.1;
+- los listados `retornarSesionesXLegislatura` y
+  `retornarSesionesXAnno`;
+- las respuestas completas de `retornarVotacionesXAnno` y
+  `retornarVotacionDetalle`.
+
+En las doce respuestas de detalle controladas:
+
+- `Votaciones` no apareció;
+- no apareció vacío;
+- no apareció ningún `Votacion/Id`;
+- GET y SOAP 1.1 coincidieron en esa ausencia.
+
+El XSD declara `SesionSala/Votaciones` como opcional. El fixture
+`documented_session_with_votes.xml` representa únicamente esa forma
+documentada y está rotulado como tal; no es una respuesta observada.
+
+El detalle real de votación tampoco contiene `Sesion` ni `session_id`. No se
+encontró una clave explícita en ninguna dirección.
+
+## Contrato recomendado para la V0
+
+### Diputado
+
+- `official_id: str`: obligatorio, tomado de `Diputado/Id`; clave de resolución.
+- `name_original: str`: obligatorio.
+- `district: int | null`: nullable mientras Open Data omita el nodo.
+- `district_source_operation: str | null`: obligatorio cuando exista distrito.
+- Publicación para un distrito: bloqueada si `district` es null.
+
+### Asistencia
+
+- `session_id: str`: obligatorio.
+- `deputy_official_id: str`: obligatorio; FK lógica a `Diputado.official_id`.
+- `raw_status: str`: obligatorio y preservado sin interpretación.
+- `source_url` y hash de evidencia: obligatorios.
+
+### Votación y voto individual
+
+- `vote_event_id: str`: obligatorio.
+- `session_id: str | null`: nullable; solo se completa si una respuesta oficial
+  incorpora una clave explícita.
+- `deputy_official_id: str`: obligatorio en voto individual.
+- `raw_option: str`: obligatorio y preservado sin interpretación.
+- `temporal_candidate`: no forma parte del contrato productivo.
+
+## Relaciones confirmadas
+
+- período → legislatura por `PeriodoLegislativo/Legislaturas/Legislatura/Id`;
+- legislatura → sesión por parámetro y respuesta de
+  `retornarSesionesXLegislatura`;
+- sesión → asistencia por `retornarSesionAsistencia(prmSesionId)`;
+- asistencia → diputado por `Diputado/Id`;
+- evento de votación → voto individual por `Votacion/Votos/Voto`;
+- voto individual → diputado por `Diputado/Id`.
+
+## Relaciones no confirmadas
+
+- diputado vigente → distrito en las respuestas Open Data actuales;
+- sesión → votación;
+- votación → sesión;
+- nombre BCN → ID Cámara como relación productiva estable.
+
+## Hechos, ausencias del contrato e inferencias prohibidas
+
+### Hechos
+
+- Los cuatro protocolos de diputados respondieron HTTP 200.
+- Todos retornaron 155 `DiputadoPeriodo`.
+- Asistencia y voto individual contienen IDs de diputado coincidentes.
+- BCN reporta cinco diputados para el Distrito 19.
+
+### Ausencias del contrato
+
+- `DiputadoPeriodo/Distrito`, aunque está documentado.
+- `SesionSala/Votaciones` en todas las muestras reales auditadas.
+- `session_id` en las respuestas reales de votación.
+
+### Inferencias prohibidas
+
+- asignar distrito por nombre, partido, región, correo o conocimiento externo;
+- convertir la coincidencia de timestamp en vínculo sesión–votación;
+- llenar `Votacion.session_id` con un `temporal_candidate`;
+- publicar la validación BCN como fuente productiva sin una decisión explícita
+  y una evaluación de estabilidad;
+- interpretar asistencia, ausencia u opción de voto como conducta correcta o
+  incorrecta.
 
 ## Reproducción
 
@@ -86,12 +187,7 @@ cd ..
 python scripts/explore_camara.py --district 19 --timeout 60
 ```
 
-El código de salida esperado mientras continúe la omisión es `2`, acompañado de
-`status: incomplete_source_contract`. Los XML completos se guardan sin
-modificar bajo `data/raw`, con el prefijo de operación y los primeros doce
-caracteres de su SHA-256. El resumen incluye el SHA-256 completo de cada
-respuesta.
-
-Los fixtures de tests son extractos pequeños de respuestas reales y preservan
-los nombres de elementos y valores originales relevantes; no sustituyen la
-evidencia íntegra guardada en `data/raw`.
+Mientras Open Data continúe omitiendo el distrito, el resultado esperado es
+`status: incomplete_source_contract` y código de salida `2`. Todos los XML y el
+HTML BCN se guardan íntegros en `data/raw` con operación, protocolo, fecha UTC y
+prefijo del SHA-256 en el nombre; el resumen imprime el hash completo.

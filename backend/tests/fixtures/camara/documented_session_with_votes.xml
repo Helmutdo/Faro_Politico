@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SesionSala xmlns="http://opendata.camara.cl/camaradiputados/v1">
+  <Id>9999</Id>
+  <Numero>1</Numero>
+  <FechaInicio>2026-01-01T10:00:00</FechaInicio>
+  <FechaTermino>2026-01-01T12:00:00</FechaTermino>
+  <Estado Valor="1">Celebrada</Estado>
+  <Votaciones>
+    <Votacion><Id>8888</Id></Votacion>
+  </Votaciones>
+</SesionSala>

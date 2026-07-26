@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DiputadosPeriodoColeccion xmlns="http://opendata.camara.cl/camaradiputados/v1">
+  <DiputadoPeriodo>
+    <Diputado>
+      <Id>9999</Id>
+      <Nombre>Nombre de prueba</Nombre>
+      <ApellidoPaterno>Contrato</ApellidoPaterno>
+      <ApellidoMaterno>Documentado</ApellidoMaterno>
+    </Diputado>
+    <Distrito>
+      <Numero>19</Numero>
+      <Comunas>
+        <Comuna><Numero>1</Numero><Nombre>Comuna de prueba</Nombre></Comuna>
+      </Comunas>
+    </Distrito>
+  </DiputadoPeriodo>
+</DiputadosPeriodoColeccion>
