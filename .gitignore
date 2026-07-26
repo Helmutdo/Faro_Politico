@@ -1,0 +1,37 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+htmlcov/
+.coverage
+dist/
+build/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local data (keep directory marker)
+data/raw/*
+!data/raw/.gitkeep
+
+# Local database volumes
+.postgres-data/
