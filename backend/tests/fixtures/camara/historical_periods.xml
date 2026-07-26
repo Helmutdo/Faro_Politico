@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PeriodosLegislativos>
+  <PeriodoLegislativo>
+    <Id>3</Id>
+    <Nombre>1998-2002</Nombre>
+    <FechaInicio>1998-03-11T00:00:00</FechaInicio>
+    <FechaTermino>2002-03-10T00:00:00</FechaTermino>
+    <Legislaturas>
+      <Legislatura>
+        <Id>21</Id>
+        <Numero>337</Numero>
+        <FechaInicio>1998-03-11T00:00:00</FechaInicio>
+        <FechaTermino>1998-05-20T23:59:59</FechaTermino>
+      </Legislatura>
+    </Legislaturas>
+  </PeriodoLegislativo>
+</PeriodosLegislativos>

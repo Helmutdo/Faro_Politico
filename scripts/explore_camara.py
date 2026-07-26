@@ -18,7 +18,6 @@ from typing import Any, cast
 
 import httpx
 from lxml import etree, html
-
 from trama_publica.etl.camara_xml import (
     Attendance,
     DeputyPeriod,
@@ -325,7 +324,7 @@ def explore(district: int, timeout: float) -> tuple[dict[str, Any], bool]:
                     params={"prmLegislaturaId": prior_legislature_id},
                 )
             )
-            if session.started_at.year < datetime.now().year
+            if session.started_at.year < datetime.now(UTC).year
         )
         for label, legislature_id in (
             ("recent", current_legislature_id),
