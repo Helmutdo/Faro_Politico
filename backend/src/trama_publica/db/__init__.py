@@ -1,1 +1,5 @@
-"""Infraestructura de persistencia (sin modelos en la V0 inicial)."""
+"""Infraestructura de persistencia del núcleo histórico."""
+
+from trama_publica.db.base import Base
+
+__all__ = ["Base"]

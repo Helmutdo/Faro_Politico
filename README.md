@@ -1,43 +1,22 @@
-# Trama Pública
+# Faro Político
 
-Plataforma de transparencia parlamentaria basada exclusivamente en datos
-oficiales verificables. La V0 cubre a las diputadas y los diputados vigentes
-del Distrito 19 (Ñuble), usando como única fuente el Open Data de la Cámara de
-Diputadas y Diputados de Chile.
+Plataforma histórica de evidencia pública para construir dossiers verificables
+de políticos chilenos. Conserva hechos, documentos, versiones, revisiones y
+rectificaciones sin formular acusaciones propias.
 
-## Estado
-
-Este repositorio contiene el esqueleto inicial del monorepo. Todavía no incluye
-integración con la Cámara, extracción de datos ni modelos de base de datos.
-Consulta [docs/scope-v0.md](docs/scope-v0.md) para conocer el alcance aprobado.
-
-## Estructura
-
-- `backend/`: aplicación Python compartida por API, dominio y futuros procesos ETL.
-- `web/`: aplicación Next.js con TypeScript y App Router.
-- `infra/`: infraestructura local con Docker Compose.
-- `docs/`: decisiones y alcance del producto.
-- `scripts/`: automatizaciones del proyecto.
-- `data/raw/`: datos originales locales, excluidos de Git salvo su marcador.
+La V0 trabaja con 3 a 5 dossiers revisables. El módulo Open Data de la Cámara se
+mantiene como una fuente dentro de un dominio más amplio. Consulta
+[docs/scope-v0.md](docs/scope-v0.md) y
+[docs/evidence-policy.md](docs/evidence-policy.md).
 
 ## Requisitos
 
 - Python 3.12 o superior
-- Node.js 22 o superior y npm
 - Docker con Docker Compose
-- Git
-
-Versiones detectadas al inicializar el proyecto (25 de julio de 2026):
-
-- Python 3.14.6
-- Node.js 26.5.0
-- npm 12.0.1
-- Git 2.55.0
-- Docker y Docker Compose: no disponibles en el entorno
+- PostgreSQL 17 mediante Compose
+- Node.js y npm solo para el frontend existente, fuera de esta etapa
 
 ## Instalación
-
-Backend:
 
 ```bash
 cd backend
@@ -45,61 +24,72 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
-```
-
-Frontend:
-
-```bash
-cd web
-npm install
-```
-
-Configuración local:
-
-```bash
+cd ..
 cp .env.example .env
 ```
 
-## Desarrollo
+La configuración predeterminada local usa:
 
-Servicios de infraestructura:
-
-```bash
-docker compose -f infra/compose.yaml up -d
+```dotenv
+DATABASE_URL=postgresql+psycopg://trama_publica:trama_publica_dev@localhost:5432/trama_publica
 ```
 
-API:
+## PostgreSQL y migraciones
+
+Desde la raíz:
 
 ```bash
+docker compose -f infra/compose.yaml up -d postgres
 cd backend
 source .venv/bin/activate
-uvicorn trama_publica.api.app:app --reload
+alembic -c alembic.ini upgrade head
 ```
 
-Frontend:
+Revertir completamente y volver a crear:
 
 ```bash
-cd web
-npm run dev
+alembic -c alembic.ini downgrade base
+alembic -c alembic.ini upgrade head
 ```
+
+Detener PostgreSQL sin eliminar el volumen:
+
+```bash
+docker compose -f infra/compose.yaml down
+```
+
+## Fixtures ficticios
+
+Después de migrar, desde la raíz del repositorio:
+
+```bash
+backend/.venv/bin/python scripts/load_fictitious_evidence.py
+```
+
+El cargador es idempotente y usa únicamente Persona Ficticia A, Persona Ficticia
+B, instituciones, empresas, causas y documentos expresamente ficticios. No es
+una fuente de producción.
 
 ## Verificación
 
 ```bash
-cd backend
-ruff format --check .
-ruff check .
-mypy src
-pytest
-
-cd ../web
-npm run lint
-npm run typecheck
-npm run build
+backend/.venv/bin/ruff format --check backend/src backend/tests backend/alembic scripts
+backend/.venv/bin/ruff check backend/src backend/tests backend/alembic scripts
+backend/.venv/bin/mypy --config-file backend/pyproject.toml backend/src
+backend/.venv/bin/pytest -c backend/pyproject.toml backend/tests
+git diff --check
 ```
 
-## Fuente y trazabilidad
+## Estructura relevante
 
-La única fuente autorizada para la V0 es el portal Open Data de la Cámara de
-Diputadas y Diputados de Chile. Cada dato que llegue a publicarse deberá incluir
-su fuente y conservar el valor original recibido.
+- `backend/src/trama_publica/db/`: modelos, base y sesiones SQLAlchemy.
+- `backend/src/trama_publica/domain/`: catálogos, comandos y servicios.
+- `backend/alembic/`: migraciones PostgreSQL.
+- `backend/tests/`: parsers existentes y dominio de evidencia.
+- `scripts/load_fictitious_evidence.py`: dossier demostrativo ficticio.
+- `infra/compose.yaml`: PostgreSQL local.
+- `docs/data-model.md`: decisiones y diagrama implementado.
+- `docs/review-workflow.md`: transiciones y revisión humana.
+
+No se implementan todavía frontend nuevo, API pública, score, Neo4j,
+inteligencia artificial ni nuevas fuentes.
