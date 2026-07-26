@@ -1,51 +1,65 @@
-# Alcance de Trama Pública V0
+# Alcance de Faro Político V0
 
-## Propósito
+## Definición
 
-Trama Pública V0 presenta información parlamentaria verificable sin emitir
-juicios sobre ella. Su objetivo es facilitar el acceso y la trazabilidad de
-datos públicos oficiales.
+La V0 es un **dossier histórico verificable de 3 a 5 políticos chilenos, con
+línea temporal, evidencia documental y relaciones históricas**. Su propósito es
+mostrar qué hecho está respaldado por qué documento, qué período cubre y cuál
+fue su resultado, sin emitir acusaciones ni clasificaciones morales propias.
 
-## Fuente autorizada
+No es solo un dashboard de actividad parlamentaria reciente. El módulo Open
+Data de la Cámara se conserva como una fuente ya auditada dentro de una
+plataforma histórica más amplia.
 
-La única fuente de la V0 es Open Data de la Cámara de Diputadas y Diputados de
-Chile. No se incorporarán datos obtenidos de fuentes secundarias ni se
-inventarán contratos de integración antes de verificar la documentación y las
-respuestas oficiales.
+## Contenido del dossier
 
-## Universo
+- identidades y variantes documentadas;
+- cargos, mandatos, militancias y territorios versionados;
+- actividad parlamentaria disponible: sesiones, asistencia y votos;
+- organizaciones, sociedades y contratos, solo con respaldo suficiente;
+- causas judiciales y administrativas, eventos y resultados;
+- declaraciones patrimoniales y reuniones de lobby;
+- documentos, snapshots, claims, cobertura y trazabilidad de ingestión;
+- rectificaciones, absoluciones, sobreseimientos y decisiones posteriores.
 
-El universo se limita a las diputadas y los diputados vigentes del Distrito 19,
-correspondiente a la Región de Ñuble.
+La V0 admite ingestión automatizada de fuentes aprobadas y carga manual
+revisada. Ambos caminos deben preservar el original, registrar procedencia y
+pasar por el mismo flujo:
 
-## Información incluida
+`discovered → extracted → pending_review → verified → published`
 
-- Identidad parlamentaria.
-- Mandato.
-- Sesiones.
-- Asistencia.
-- Votaciones.
-- Voto individual.
-- Fuente y valor original recibido para cada información publicada.
+Los estados terminales o posteriores son `rejected`, `corrected` y `archived`.
+Publicar no borra estados anteriores ni la evidencia de una rectificación.
 
-Una ausencia, asistencia o decisión de voto se mostrará como dato factual. La
-plataforma no la interpretará como una conducta correcta o incorrecta.
+## Principios de publicación
 
-## Exclusiones expresas
+El sistema almacena hechos atribuidos a fuentes y documentos, no acusaciones
+propias. Una denuncia no es culpabilidad; una investigación no es condena; una
+relación no demuestra delito. Solo una resolución oficial competente establece
+una condena o sanción, y debe indicarse si está firme.
 
-La V0 no incluye:
+Toda afirmación apunta a su evidencia. Se conserva tanto el inicio como el
+resultado final, incluidas absoluciones, sobreseimientos y rectificaciones. No
+se infieren identidades, parentescos, sociedades o delitos por nombres
+coincidentes. La falta de datos no se interpreta como mérito ni reproche.
 
-- scores, rankings o indicadores de desempeño político;
-- clasificaciones morales o editoriales;
-- inteligencia artificial;
-- Neo4j ni otra base de datos de grafos;
-- autenticación o gestión de usuarios;
-- scraping o datos del Poder Judicial;
-- datos de InfoProbidad;
-- datos de Mercado Público;
-- fuentes distintas al Open Data de la Cámara;
-- extracción de datos o modelado de base de datos durante la inicialización del
-  monorepo.
+## Interfaz conceptual futura
 
-Cualquier ampliación requiere una decisión explícita de producto y una
-actualización de este documento.
+El dossier tendrá vistas de:
+
+- línea temporal de hechos y vigencias;
+- documentos y fragmentos de respaldo;
+- causas, roles procesales, eventos y resultados;
+- relaciones históricas con evidencia y revisión;
+- actividad parlamentaria;
+- cobertura por fuente, dimensión y período;
+- derecho a rectificación, historial de cambios y respuesta documentada.
+
+## Límites de esta etapa
+
+Esta etapa solo redefine el dominio y las políticas. No implementa SQLAlchemy,
+Alembic, PostgreSQL, frontend, score, scraping masivo ni nuevas integraciones.
+Tampoco autoriza tratamiento masivo del portal del Poder Judicial.
+
+El score queda fuera de la V0. Sus condiciones mínimas futuras se documentan en
+`docs/future-score-principles.md`.
